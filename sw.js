@@ -1,6 +1,6 @@
 // Simple offline-first service worker: pre-cache the app shell, serve from
 // cache, refresh the cache in the background (stale-while-revalidate).
-const CACHE = "meal-planner-v3";
+const CACHE = "meal-planner-v4";
 const FILES = [
   ".",
   "index.html",

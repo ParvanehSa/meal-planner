@@ -258,6 +258,7 @@ button.small { padding: 5px 10px; font-size: 0.8rem; }
   font-size: 0.85rem;
 }
 .ing-row .ing-name { flex: 3; min-width: 0; }
+.ing-row .ing-name-fa { flex: 3; min-width: 0; }
 .ing-row .ing-qty { flex: 0 0 62px; }
 .ing-row .ing-unit { flex: 0 0 78px; }
 .ing-row .ing-cat { flex: 0 0 120px; }

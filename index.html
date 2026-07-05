@@ -46,7 +46,10 @@
   <section id="tab-menu" class="tab-panel active">
     <div class="panel-head">
       <h2 data-i18n="pickFoods">Pick the foods you want to cook next week</h2>
-      <button id="newWeekBtn" class="secondary" data-i18n="startNewWeek">🔄 Start new week</button>
+      <div class="btn-row">
+        <button id="addFoodBtn" class="primary" data-i18n="addFoodBtn">➕ Add a new food</button>
+        <button id="newWeekBtn" class="secondary" data-i18n="startNewWeek">🔄 Start new week</button>
+      </div>
     </div>
     <div id="foodList" class="food-list"></div>
     <div class="menu-footer">
@@ -99,6 +102,9 @@
     <label><span data-i18n="sourceLabel">Source (where this recipe comes from)</span>
       <input type="text" id="edSourceLabel" data-i18n-placeholder="sourceLabelPh" placeholder="e.g. Yummy Gastronomy YouTube, Namnak, my own recipe">
     </label>
+    <label><span data-i18n="sourceLabelFaLbl">Source (فارسی, optional)</span>
+      <input type="text" id="edSourceLabelFa" dir="auto">
+    </label>
     <label><span data-i18n="sourceUrl">Source link (optional)</span>
       <input type="url" id="edSourceUrl" placeholder="https://...">
     </label>
@@ -107,11 +113,17 @@
     <div id="edIngredients"></div>
     <button id="edAddIngBtn" class="secondary small" data-i18n="addIngredient">+ Add ingredient</button>
 
-    <h3 data-i18n="steps">Steps</h3>
-    <textarea id="edSteps" rows="6" dir="auto" data-i18n-placeholder="stepsPh" placeholder="One step per line"></textarea>
+    <h3 data-i18n="stepsEnLabel">Steps (English)</h3>
+    <textarea id="edSteps" rows="5" dir="auto" data-i18n-placeholder="stepsPh" placeholder="One step per line"></textarea>
 
-    <h3 data-i18n="notes">Notes</h3>
+    <h3 data-i18n="stepsFaLabel">Steps (فارسی)</h3>
+    <textarea id="edStepsFa" rows="5" dir="rtl" data-i18n-placeholder="stepsPh" placeholder="هر مرحله در یک خط"></textarea>
+
+    <h3 data-i18n="notesEnLabel">Notes (English)</h3>
     <textarea id="edNotes" rows="2" dir="auto" data-i18n-placeholder="notesPh" placeholder="e.g. double everything for a crowd of 10"></textarea>
+
+    <h3 data-i18n="notesFaLabel">Notes (فارسی)</h3>
+    <textarea id="edNotesFa" rows="2" dir="rtl"></textarea>
 
     <!-- Voice recording -->
     <div class="voice-box">
@@ -135,6 +147,23 @@
         <button class="secondary close-modal" data-i18n="cancel">Cancel</button>
         <button id="edSaveBtn" class="primary" data-i18n="saveRecipe">💾 Save recipe</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ADD FOOD MODAL ============ -->
+<div id="addFoodModal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-head">
+      <h2 data-i18n="addFoodTitle">Add a new food</h2>
+      <button class="icon-btn close-modal">✖</button>
+    </div>
+    <p class="hint" data-i18n="addFoodHint">Type the name of the dish. Claude AI can write the complete recipe for 2 people, or you can enter it yourself.</p>
+    <input type="text" id="newFoodName" dir="auto" data-i18n-placeholder="foodNamePh" placeholder="e.g. Lasagna, کوکو سبزی ..." style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px; font-size:1rem;">
+    <p id="addFoodStatus" class="hint"></p>
+    <div class="modal-footer">
+      <button id="createManualBtn" class="secondary" data-i18n="createManually">✏️ Enter myself</button>
+      <button id="createAIBtn" class="primary" data-i18n="createWithAI">✨ Create with Claude AI</button>
     </div>
   </div>
 </div>

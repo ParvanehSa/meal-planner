@@ -77,6 +77,22 @@ function displayName(r) {
   return r.nameEn || r.nameFa || "(unnamed)";
 }
 
+/* Bilingual content pickers — Farsi with English fallback (and vice versa) */
+function ingDisplay(ing) {
+  return LANG === "fa" ? (ing.nameFa || ing.name) : (ing.name || ing.nameFa);
+}
+function recipeSteps(r) {
+  if (LANG === "fa" && Array.isArray(r.stepsFa) && r.stepsFa.length) return r.stepsFa;
+  return r.steps || [];
+}
+function recipeNotes(r) {
+  return LANG === "fa" ? (r.notesFa || r.notes || "") : (r.notes || "");
+}
+function sourceLabel(r) {
+  const s = r.source || {};
+  return LANG === "fa" ? (s.labelFa || s.label || "") : (s.label || "");
+}
+
 function storeSearchUrl(store, itemName) {
   // strip parentheses/details so the search query stays short and useful
   let q = itemName.replace(/\(.*?\)/g, "").split(":")[0].split("—")[0].trim();
@@ -180,8 +196,9 @@ function buildShoppingItems() {
     for (const ing of r.ingredients) {
       const key = (ing.name.trim().toLowerCase() + "|" + (ing.unit || "")).replace(/\s+/g, " ");
       if (!map.has(key)) {
-        map.set(key, { key, name: ing.name, unit: ing.unit || "", qty: 0, category: ing.category || "Other", usedIn: [] });
+        map.set(key, { key, name: ing.name, nameFa: ing.nameFa || "", unit: ing.unit || "", qty: 0, category: ing.category || "Other", usedIn: [] });
       }
+      if (!map.get(key).nameFa && ing.nameFa) map.get(key).nameFa = ing.nameFa;
       const item = map.get(key);
       if (ing.unit !== "to taste") item.qty += scale(Number(ing.qty) || 0);
       item.usedIn.push(LANG === "fa" ? (r.nameFa || r.nameEn) : (r.nameEn || r.nameFa));
@@ -262,7 +279,7 @@ function shoppingRow(it) {
   row.innerHTML = `
     <input type="checkbox" ${checked ? "checked" : ""}>
     <span>
-      <span class="item-name" dir="auto">${esc(it.name)}</span>
+      <span class="item-name" dir="auto">${esc(ingDisplay(it))}</span>
       <span class="store-links">${storeLinksHtml(it.name)}</span><br>
       <span class="used-in" dir="auto">${t("forLabel")}: ${esc(usedIn)}</span>
     </span>
@@ -302,7 +319,7 @@ $("#copyListBtn").addEventListener("click", async () => {
   const lines = [t("shoppingListHeader") + " (" + new Date().toLocaleDateString(LANG === "fa" ? "fa-IR" : undefined) + ")"];
   for (const it of items) {
     const qt = it.unit === "to taste" ? "" : ` — ${qtyText(it.qty, it.unit)}`;
-    lines.push(`• ${it.name}${qt}`);
+    lines.push(`• ${ingDisplay(it)}${qt}`);
   }
   for (const ex of extras) lines.push(`• ${ex.name}`);
   try {
@@ -327,13 +344,14 @@ function renderRecipes() {
 
     const ingredients = r.ingredients.map(ing => {
       const qt = ing.unit === "to taste" ? t("toTaste") : qtyText(scale(Number(ing.qty) || 0), ing.unit);
-      return `<li dir="auto">${esc(ing.name)} — <strong>${esc(qt)}</strong></li>`;
+      return `<li dir="auto">${esc(ingDisplay(ing))} — <strong>${esc(qt)}</strong></li>`;
     }).join("");
 
-    const steps = (r.steps || []).map(s => `<li dir="auto">${esc(s)}</li>`).join("");
+    const steps = recipeSteps(r).map(s => `<li dir="auto">${esc(s)}</li>`).join("");
     const sourceLink = r.source?.url
       ? ` — <a href="${esc(r.source.url)}" target="_blank" rel="noopener">${t("openSource")}</a>`
       : "";
+    const notes = recipeNotes(r);
     const primary = LANG === "fa" ? (r.nameFa || r.nameEn) : (r.nameEn || r.nameFa);
     const secondary = LANG === "fa" ? (r.nameFa ? r.nameEn : "") : (r.nameEn ? r.nameFa : "");
 
@@ -351,8 +369,8 @@ function renderRecipes() {
         <ul>${ingredients}</ul>
         <h4>${t("steps")}</h4>
         <ol>${steps}</ol>
-        ${r.notes ? `<div class="recipe-notes" dir="auto">📌 ${esc(r.notes)}</div>` : ""}
-        <p class="source-line" dir="auto">${t("source")}: ${esc(r.source?.label || t("notSet"))}${sourceLink}</p>
+        ${notes ? `<div class="recipe-notes" dir="auto">📌 ${esc(notes)}</div>` : ""}
+        <p class="source-line" dir="auto">${t("source")}: ${esc(sourceLabel(r) || t("notSet"))}${sourceLink}</p>
       </div>`;
 
     card.querySelector(".recipe-head").addEventListener("click", (e) => {
@@ -376,9 +394,12 @@ function openEditor(id) {
   $("#edNameEn").value = r?.nameEn || "";
   $("#edNameFa").value = r?.nameFa || "";
   $("#edSourceLabel").value = r?.source?.label || "";
+  $("#edSourceLabelFa").value = r?.source?.labelFa || "";
   $("#edSourceUrl").value = r?.source?.url || "";
   $("#edSteps").value = (r?.steps || []).join("\n");
+  $("#edStepsFa").value = (r?.stepsFa || []).join("\n");
   $("#edNotes").value = r?.notes || "";
+  $("#edNotesFa").value = r?.notesFa || "";
   $("#edDeleteBtn").style.display = r ? "" : "none";
   $("#voiceTranscript").value = "";
   $("#voiceStatus").textContent = "";
@@ -400,6 +421,7 @@ function ingredientRow(ing = {}) {
     `<option value="${c}" ${c === (ing.category || "Other") ? "selected" : ""}>${t("cat_" + c)}</option>`).join("");
   row.innerHTML = `
     <input class="ing-name" placeholder="${esc(t("ingName"))}" value="${esc(ing.name || "")}" dir="auto">
+    <input class="ing-name-fa" placeholder="${esc(t("ingNameFaPh"))}" value="${esc(ing.nameFa || "")}" dir="rtl">
     <input class="ing-qty" type="number" step="any" min="0" placeholder="${esc(t("ingQty"))}" value="${ing.qty ?? ""}">
     <select class="ing-unit">${unitOpts}</select>
     <select class="ing-cat">${catOpts}</select>
@@ -420,19 +442,27 @@ $("#edSaveBtn").addEventListener("click", () => {
   const ingredients = [...document.querySelectorAll("#edIngredients .ing-row")]
     .map(row => ({
       name: row.querySelector(".ing-name").value.trim(),
+      nameFa: row.querySelector(".ing-name-fa").value.trim(),
       qty: Number(row.querySelector(".ing-qty").value) || 0,
       unit: row.querySelector(".ing-unit").value,
       category: row.querySelector(".ing-cat").value
     }))
-    .filter(ing => ing.name);
+    .filter(ing => ing.name || ing.nameFa)
+    .map(ing => ({ ...ing, name: ing.name || ing.nameFa })); // English name is the aggregation key — fall back to Farsi
 
   const steps = $("#edSteps").value.split("\n").map(s => s.trim()).filter(Boolean);
+  const stepsFa = $("#edStepsFa").value.split("\n").map(s => s.trim()).filter(Boolean);
 
   const data = {
     nameEn, nameFa,
-    source: { label: $("#edSourceLabel").value.trim(), url: $("#edSourceUrl").value.trim() },
-    ingredients, steps,
-    notes: $("#edNotes").value.trim()
+    source: {
+      label: $("#edSourceLabel").value.trim(),
+      labelFa: $("#edSourceLabelFa").value.trim(),
+      url: $("#edSourceUrl").value.trim()
+    },
+    ingredients, steps, stepsFa,
+    notes: $("#edNotes").value.trim(),
+    notesFa: $("#edNotesFa").value.trim()
   };
 
   if (editingId) {
@@ -503,7 +533,49 @@ function stopRecording() {
   $("#voiceStatus").textContent = t("recStopped");
 }
 
-/* ---------------- AI cleanup ---------------- */
+/* ---------------- AI recipe generation (shared) ---------------- */
+const RECIPE_JSON_SPEC =
+`Respond with ONLY valid JSON, no markdown, in this exact shape:
+{"nameEn":"...","nameFa":"...","ingredients":[{"name":"English name","nameFa":"نام فارسی","qty":1,"unit":"one of: ,g,kg,cup,tbsp,tsp,can,pack,bunch,to taste","category":"one of: Produce,Meat & Protein,Dairy,Bakery,Pantry,Frozen,Spices,Other"}],"steps":["English step ..."],"stepsFa":["مرحله به فارسی ..."],"notes":"...","notesFa":"..."}
+Every ingredient MUST have both name (English) and nameFa (Persian). steps and stepsFa MUST have the same steps in both languages. All amounts scaled for 2 people; if amounts are missing, use sensible amounts for 2.`;
+
+async function aiGenerateRecipe(promptText) {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": state.apiKey,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true"
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-5",
+      max_tokens: 3000,
+      messages: [{ role: "user", content: promptText }]
+    })
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error("API error " + res.status + ": " + err.slice(0, 200));
+  }
+  const data = await res.json();
+  let text = data.content?.[0]?.text || "";
+  text = text.replace(/^```json?\s*/i, "").replace(/```\s*$/, "").trim();
+  const parsed = JSON.parse(text);
+  // sanitize
+  parsed.ingredients = (parsed.ingredients || []).map(ing => ({
+    name: ing.name || ing.nameFa || "",
+    nameFa: ing.nameFa || "",
+    qty: Number(ing.qty) || 0,
+    unit: UNITS.includes(ing.unit) ? ing.unit : "",
+    category: CATEGORIES.includes(ing.category) ? ing.category : "Other"
+  })).filter(ing => ing.name);
+  parsed.steps = Array.isArray(parsed.steps) ? parsed.steps : [];
+  parsed.stepsFa = Array.isArray(parsed.stepsFa) ? parsed.stepsFa : [];
+  return parsed;
+}
+
+/* ---------------- AI cleanup (recipe editor) ---------------- */
 $("#aiCleanBtn").addEventListener("click", async () => {
   const transcript = $("#voiceTranscript").value.trim();
   if (!transcript) {
@@ -517,60 +589,89 @@ $("#aiCleanBtn").addEventListener("click", async () => {
   $("#voiceStatus").textContent = t("cleaning");
   $("#aiCleanBtn").disabled = true;
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": state.apiKey,
-        "anthropic-version": "2023-06-01",
-        "anthropic-dangerous-direct-browser-access": "true"
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-5",
-        max_tokens: 2000,
-        messages: [{
-          role: "user",
-          content:
-`Below is a spoken/messy recipe transcript (may be in Persian or English). Turn it into a clean structured recipe scaled for 2 people.
-Respond with ONLY valid JSON, no markdown, in this exact shape:
-{"nameEn":"...","nameFa":"...","ingredients":[{"name":"...","qty":1,"unit":"one of: ,g,kg,cup,tbsp,tsp,can,pack,bunch,to taste","category":"one of: Produce,Meat & Protein,Dairy,Bakery,Pantry,Frozen,Spices,Other"}],"steps":["..."],"notes":"..."}
-Ingredient names and steps in English (keep the Persian dish name in nameFa). If amounts are missing, use sensible amounts for 2 people.
+    const parsed = await aiGenerateRecipe(
+`Below is a spoken/messy recipe transcript (may be in Persian or English). Turn it into a clean structured bilingual recipe scaled for 2 people.
+${RECIPE_JSON_SPEC}
 
 Transcript:
-${transcript}`
-        }]
-      })
-    });
-    if (!res.ok) {
-      const err = await res.text();
-      throw new Error("API error " + res.status + ": " + err.slice(0, 200));
-    }
-    const data = await res.json();
-    let text = data.content?.[0]?.text || "";
-    text = text.replace(/^```json?\s*/i, "").replace(/```\s*$/, "").trim();
-    const parsed = JSON.parse(text);
+${transcript}`);
 
-    // fill the editor form with the AI result
     if (parsed.nameEn && !$("#edNameEn").value) $("#edNameEn").value = parsed.nameEn;
     if (parsed.nameFa && !$("#edNameFa").value) $("#edNameFa").value = parsed.nameFa;
-    if (Array.isArray(parsed.ingredients) && parsed.ingredients.length) {
+    if (parsed.ingredients.length) {
       const box = $("#edIngredients");
       box.innerHTML = "";
-      parsed.ingredients.forEach(ing => box.appendChild(ingredientRow({
-        name: ing.name || "",
-        qty: Number(ing.qty) || 0,
-        unit: UNITS.includes(ing.unit) ? ing.unit : "",
-        category: CATEGORIES.includes(ing.category) ? ing.category : "Other"
-      })));
+      parsed.ingredients.forEach(ing => box.appendChild(ingredientRow(ing)));
     }
-    if (Array.isArray(parsed.steps) && parsed.steps.length) $("#edSteps").value = parsed.steps.join("\n");
+    if (parsed.steps.length) $("#edSteps").value = parsed.steps.join("\n");
+    if (parsed.stepsFa.length) $("#edStepsFa").value = parsed.stepsFa.join("\n");
     if (parsed.notes) $("#edNotes").value = parsed.notes;
+    if (parsed.notesFa) $("#edNotesFa").value = parsed.notesFa;
     if (!$("#edSourceLabel").value) $("#edSourceLabel").value = t("myVoiceRecipe");
     $("#voiceStatus").textContent = t("aiDone");
   } catch (e) {
     $("#voiceStatus").textContent = t("aiFailed") + e.message;
   } finally {
     $("#aiCleanBtn").disabled = false;
+  }
+});
+
+/* ---------------- add new food (weekly menu) ---------------- */
+$("#addFoodBtn").addEventListener("click", () => {
+  $("#newFoodName").value = "";
+  $("#addFoodStatus").textContent = "";
+  $("#addFoodModal").classList.remove("hidden");
+  $("#newFoodName").focus();
+});
+
+$("#createManualBtn").addEventListener("click", () => {
+  const name = $("#newFoodName").value.trim();
+  $("#addFoodModal").classList.add("hidden");
+  openEditor(null);
+  if (name) {
+    // Persian characters → Farsi name field, otherwise English
+    if (/[؀-ۿ]/.test(name)) $("#edNameFa").value = name;
+    else $("#edNameEn").value = name;
+  }
+});
+
+$("#createAIBtn").addEventListener("click", async () => {
+  const name = $("#newFoodName").value.trim();
+  if (!name) { $("#addFoodStatus").textContent = t("needFoodName"); return; }
+  if (!state.apiKey) { $("#addFoodStatus").textContent = t("needKey"); return; }
+  $("#addFoodStatus").textContent = t("generating");
+  $("#createAIBtn").disabled = true;
+  try {
+    const parsed = await aiGenerateRecipe(
+`Write a complete home-cooking recipe for the dish: "${name}" (the name may be in Persian or English; if it is a Persian/Iranian dish, use the authentic traditional preparation).
+${RECIPE_JSON_SPEC}`);
+
+    const recipe = {
+      id: "r-" + Date.now(),
+      nameEn: parsed.nameEn || name,
+      nameFa: parsed.nameFa || (/[؀-ۿ]/.test(name) ? name : ""),
+      source: {
+        label: "Recipe written by Claude AI — please check the amounts",
+        labelFa: "دستور نوشته‌شده توسط هوش مصنوعی Claude — لطفاً مقادیر را بررسی کنید",
+        url: ""
+      },
+      ingredients: parsed.ingredients,
+      steps: parsed.steps,
+      stepsFa: parsed.stepsFa,
+      notes: parsed.notes || "",
+      notesFa: parsed.notesFa || ""
+    };
+    if (!recipe.ingredients.length) throw new Error("empty recipe");
+    state.recipes.push(recipe);
+    state.selectedIds.push(recipe.id); // select it for this week right away
+    saveState();
+    $("#addFoodModal").classList.add("hidden");
+    renderAll();
+    alert(`"${displayName(recipe)}" ${t("genDoneSelected")}`);
+  } catch (e) {
+    $("#addFoodStatus").textContent = t("genFailed") + e.message;
+  } finally {
+    $("#createAIBtn").disabled = false;
   }
 });
 

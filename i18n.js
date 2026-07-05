@@ -109,7 +109,25 @@ const I18N = {
     notBackup: "not a valid backup file",
     searchWalmart: "Walmart",
     searchAmazon: "Amazon",
-    searchTitle: "Search this item on"
+    searchTitle: "Search this item on",
+    // add-food
+    addFoodBtn: "➕ Add a new food",
+    addFoodTitle: "Add a new food",
+    addFoodHint: "Type the name of the dish (English or فارسی). Claude AI can write the complete recipe for 2 people — ingredients, steps, in both languages — ready for the shopping list. Or enter it yourself.",
+    foodNamePh: "e.g. Lasagna, کوکو سبزی ...",
+    createWithAI: "✨ Create with Claude AI",
+    createManually: "✏️ Enter myself",
+    generating: "✨ Claude is writing the recipe... (about 15 seconds)",
+    genFailed: "⚠ Could not create the recipe: ",
+    needFoodName: "Please type the name of the food first.",
+    genDoneSelected: "was created and selected for your week — check it in the Recipes tab.",
+    // bilingual editor labels
+    stepsEnLabel: "Steps (English)",
+    stepsFaLabel: "Steps (فارسی)",
+    notesEnLabel: "Notes (English)",
+    notesFaLabel: "Notes (فارسی)",
+    sourceLabelFaLbl: "Source (فارسی, optional)",
+    ingNameFaPh: "نام فارسی (اختیاری)"
   },
   fa: {
     appTitle: "🍳 برنامه‌ریز غذای هفتگی",
@@ -219,7 +237,25 @@ const I18N = {
     notBackup: "فایل پشتیبان معتبر نیست",
     searchWalmart: "Walmart",
     searchAmazon: "Amazon",
-    searchTitle: "جستجوی این قلم در"
+    searchTitle: "جستجوی این قلم در",
+    // add-food
+    addFoodBtn: "➕ افزودن غذای جدید",
+    addFoodTitle: "افزودن غذای جدید",
+    addFoodHint: "نام غذا را بنویسید (فارسی یا انگلیسی). هوش مصنوعی Claude می‌تواند دستور کامل را برای ۲ نفر بنویسد — مواد لازم و مراحل، به هر دو زبان — آماده برای لیست خرید. یا خودتان وارد کنید.",
+    foodNamePh: "مثلاً کوکو سبزی، لازانیا ...",
+    createWithAI: "✨ ساخت با هوش مصنوعی Claude",
+    createManually: "✏️ خودم وارد می‌کنم",
+    generating: "✨ Claude در حال نوشتن دستور است... (حدود ۱۵ ثانیه)",
+    genFailed: "⚠ ساخت دستور انجام نشد: ",
+    needFoodName: "لطفاً اول نام غذا را بنویسید.",
+    genDoneSelected: "ساخته شد و برای هفته شما انتخاب شد — در تب دستور پخت‌ها بررسی کنید.",
+    // bilingual editor labels
+    stepsEnLabel: "مراحل (انگلیسی)",
+    stepsFaLabel: "مراحل (فارسی)",
+    notesEnLabel: "یادداشت (انگلیسی)",
+    notesFaLabel: "یادداشت (فارسی)",
+    sourceLabelFaLbl: "منبع (فارسی، اختیاری)",
+    ingNameFaPh: "نام فارسی (اختیاری)"
   }
 };
 
