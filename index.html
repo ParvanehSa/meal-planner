@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parvane's Weekly Meal Planner</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c0392b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Meal Planner">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+</head>
+<body>
+<header>
+  <h1 data-i18n="appTitle">🍳 Weekly Meal Planner</h1>
+  <div class="header-controls">
+    <select id="langSelect" title="Language / زبان">
+      <option value="en">English</option>
+      <option value="fa">فارسی</option>
+    </select>
+    <label class="people-select">
+      <span data-i18n="cookingFor">Cooking for</span>
+      <select id="peopleCount">
+        <option value="2" selected data-i18n="people_2">2 people</option>
+        <option value="4" data-i18n="people_4">4 people</option>
+        <option value="6" data-i18n="people_6">6 people</option>
+        <option value="8" data-i18n="people_8">8 people</option>
+        <option value="10" data-i18n="people_10">10 people</option>
+      </select>
+    </label>
+    <button id="settingsBtn" class="icon-btn" title="Settings">⚙️</button>
+  </div>
+</header>
+
+<nav id="tabs">
+  <button class="tab active" data-tab="menu" data-i18n="tabMenu">📋 Weekly Menu</button>
+  <button class="tab" data-tab="shopping" data-i18n="tabShopping">🛒 Shopping List</button>
+  <button class="tab" data-tab="recipes" data-i18n="tabRecipes">📖 Recipes</button>
+</nav>
+
+<main>
+  <!-- ============ WEEKLY MENU TAB ============ -->
+  <section id="tab-menu" class="tab-panel active">
+    <div class="panel-head">
+      <h2 data-i18n="pickFoods">Pick the foods you want to cook next week</h2>
+      <button id="newWeekBtn" class="secondary" data-i18n="startNewWeek">🔄 Start new week</button>
+    </div>
+    <div id="foodList" class="food-list"></div>
+    <div class="menu-footer">
+      <span id="selectedCount"></span>
+      <button id="goShoppingBtn" class="primary" data-i18n="generateList">Generate shopping list →</button>
+    </div>
+  </section>
+
+  <!-- ============ SHOPPING LIST TAB ============ -->
+  <section id="tab-shopping" class="tab-panel">
+    <div class="panel-head">
+      <h2 data-i18n="shoppingTitle">Shopping list</h2>
+      <div class="btn-row">
+        <button id="copyListBtn" class="secondary" data-i18n="copyList">📄 Copy items to buy</button>
+        <button id="printListBtn" class="secondary" data-i18n="print">🖨️ Print</button>
+      </div>
+    </div>
+    <p class="hint"><span data-i18n="shoppingHint1">Generated from the recipes of your selected foods, scaled for </span><strong id="shopPeople">2</strong><span data-i18n="shoppingHint2"> people. Check the items you </span><strong data-i18n="shoppingHintBold">don't have at home</strong><span data-i18n="shoppingHint3"> and need to buy.</span></p>
+    <div id="shoppingList"></div>
+    <div class="extra-item-row">
+      <input type="text" id="extraItemName" data-i18n-placeholder="extraPlaceholder" placeholder="Add extra item (e.g. bread, milk)...">
+      <button id="addExtraBtn" class="secondary" data-i18n="addExtra">+ Add</button>
+    </div>
+  </section>
+
+  <!-- ============ RECIPES TAB ============ -->
+  <section id="tab-recipes" class="tab-panel">
+    <div class="panel-head">
+      <h2><span data-i18n="recipesTitle1">Recipes (amounts shown for </span><span id="recipePeople">2</span><span data-i18n="recipesTitle2"> people)</span></h2>
+      <button id="addRecipeBtn" class="primary" data-i18n="addRecipe">+ Add new recipe</button>
+    </div>
+    <div id="recipeList"></div>
+  </section>
+</main>
+
+<!-- ============ RECIPE EDITOR MODAL ============ -->
+<div id="editorModal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-head">
+      <h2 id="editorTitle">Edit recipe</h2>
+      <button class="icon-btn close-modal">✖</button>
+    </div>
+
+    <label><span data-i18n="nameEn">Name (English)</span>
+      <input type="text" id="edNameEn">
+    </label>
+    <label><span data-i18n="nameFa">Name (فارسی)</span>
+      <input type="text" id="edNameFa" dir="auto">
+    </label>
+    <label><span data-i18n="sourceLabel">Source (where this recipe comes from)</span>
+      <input type="text" id="edSourceLabel" data-i18n-placeholder="sourceLabelPh" placeholder="e.g. Yummy Gastronomy YouTube, Namnak, my own recipe">
+    </label>
+    <label><span data-i18n="sourceUrl">Source link (optional)</span>
+      <input type="url" id="edSourceUrl" placeholder="https://...">
+    </label>
+
+    <h3 data-i18n="edIngredients">Ingredients (for 2 people)</h3>
+    <div id="edIngredients"></div>
+    <button id="edAddIngBtn" class="secondary small" data-i18n="addIngredient">+ Add ingredient</button>
+
+    <h3 data-i18n="steps">Steps</h3>
+    <textarea id="edSteps" rows="6" dir="auto" data-i18n-placeholder="stepsPh" placeholder="One step per line"></textarea>
+
+    <h3 data-i18n="notes">Notes</h3>
+    <textarea id="edNotes" rows="2" dir="auto" data-i18n-placeholder="notesPh" placeholder="e.g. double everything for a crowd of 10"></textarea>
+
+    <!-- Voice recording -->
+    <div class="voice-box">
+      <h3 data-i18n="voiceTitle">🎤 Record the recipe with your voice</h3>
+      <p class="hint" data-i18n="voiceHint">Speak the recipe out loud — it will be written down here. Then use "Clean up with AI" to turn it into structured ingredients and steps automatically.</p>
+      <div class="btn-row">
+        <select id="voiceLang">
+          <option value="fa-IR">فارسی</option>
+          <option value="en-US">English</option>
+        </select>
+        <button id="recordBtn" class="secondary" data-i18n="startRec">● Start recording</button>
+        <button id="aiCleanBtn" class="secondary" data-i18n="aiClean">✨ Clean up with AI</button>
+      </div>
+      <textarea id="voiceTranscript" rows="4" dir="auto" data-i18n-placeholder="voicePh" placeholder="Your spoken words will appear here..."></textarea>
+      <p id="voiceStatus" class="hint"></p>
+    </div>
+
+    <div class="modal-footer">
+      <button id="edDeleteBtn" class="danger" data-i18n="deleteRecipe">🗑 Delete recipe</button>
+      <div>
+        <button class="secondary close-modal" data-i18n="cancel">Cancel</button>
+        <button id="edSaveBtn" class="primary" data-i18n="saveRecipe">💾 Save recipe</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SETTINGS MODAL ============ -->
+<div id="settingsModal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-head">
+      <h2 data-i18n="settings">Settings</h2>
+      <button class="icon-btn close-modal">✖</button>
+    </div>
+    <label><span data-i18n="language">Language</span>
+      <select id="settingsLang">
+        <option value="en">English</option>
+        <option value="fa">فارسی</option>
+      </select>
+    </label>
+    <label><span data-i18n="storeRegion">Country for store search links</span>
+      <select id="storeRegion">
+        <option value="ca" data-i18n="regionCA">Canada (walmart.ca / amazon.ca)</option>
+        <option value="us" data-i18n="regionUS">United States (walmart.com / amazon.com)</option>
+      </select>
+    </label>
+    <label><span data-i18n="apiKeyLabel">Anthropic API key (only needed for "Clean up with AI")</span>
+      <input type="password" id="apiKeyInput" placeholder="sk-ant-...">
+    </label>
+    <p class="hint" data-i18n="apiKeyHint">The key is stored only in your own browser (localStorage) and sent only to the official Anthropic API when you click "Clean up with AI". Get a key at console.anthropic.com.</p>
+    <hr>
+    <h3 data-i18n="recipesSection">Recipes</h3>
+    <p class="hint" data-i18n="refreshHint">When the built-in recipes are improved or new ones are added to the app, use this to pull the latest versions in. Your own added recipes are always kept — only the built-in ones are refreshed.</p>
+    <button id="refreshRecipesBtn" class="secondary" data-i18n="refreshBtn">⟳ Update built-in recipes to latest</button>
+    <hr>
+    <h3 data-i18n="backup">Backup</h3>
+    <p class="hint" data-i18n="backupHint">All your recipes and lists are saved in this browser. Export a backup file to keep them safe or move them to another device.</p>
+    <div class="btn-row">
+      <button id="exportBtn" class="secondary" data-i18n="exportBtn">⬇ Export all data</button>
+      <button id="importBtn" class="secondary" data-i18n="importBtn">⬆ Import data</button>
+      <input type="file" id="importFile" accept=".json" hidden>
+    </div>
+    <div class="modal-footer">
+      <div></div>
+      <button id="settingsSaveBtn" class="primary" data-i18n="save">Save</button>
+    </div>
+  </div>
+</div>
+
+<script src="i18n.js"></script>
+<script src="recipes.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
